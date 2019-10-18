@@ -1,6 +1,4 @@
-let customOptions;
-
-function init(server) {
+function init(customOptions, server) {
     // setup the CORS pre-flight request paths on all available endpoints
     const routes = server.table().map(item => item.path);
 
@@ -12,12 +10,6 @@ function init(server) {
             method: 'OPTIONS',
             path: route,
             config: {
-                cors: {
-                    maxAge: customOptions.maxAge || 1728000,
-                    headers: ['Origin', 'Accept', 'X-Requested-With', 'Content-Type'],
-                    credentials: customOptions.allowCreds || false,
-                    origin: [customOptions.overrideOrigin || '*'],
-                },
                 handler() {
                     return {
                         cors: 'true',
@@ -28,8 +20,8 @@ function init(server) {
     }
 }
 
-function setConfig(o) {
-    customOptions = {};
+function getConfig(o) {
+    const customOptions = {};
 
     if (o) {
         if (o.allowCreds) {
@@ -48,6 +40,15 @@ function setConfig(o) {
             customOptions.allowOriginResponse = o.allowOriginResponse;
         }
 
+        if (o.allowedOrigins) {
+            customOptions.allowedOrigins = new Set(
+                o.allowedOrigins
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean),
+            );
+        }
+
         if (o.overrideOrigin) {
             customOptions.overrideOrigin = o.overrideOrigin;
         }
@@ -56,14 +57,26 @@ function setConfig(o) {
             customOptions.maxAge = o.maxAge;
         }
     }
+
+    return customOptions;
 }
 
-async function appendHeaders(request, h) {
+async function appendHeaders(customOptions, request, h) {
     let origin = '*';
     let allowCreds = false;
 
-    if (customOptions.overrideOrigin || (request.headers.origin && customOptions.allowOriginResponse)) {
-        if (customOptions.overrideOrigin) {
+    if (
+        customOptions.allowedOrigins ||
+        customOptions.overrideOrigin ||
+        (request.headers.origin && customOptions.allowOriginResponse)
+    ) {
+        if (customOptions.allowedOrigins) {
+            if (customOptions.allowedOrigins.has(request.headers.origin)) {
+                origin = request.headers.origin;
+            } else {
+                origin = '';
+            }
+        } else if (customOptions.overrideOrigin) {
             origin = customOptions.overrideOrigin;
         } else if(request.headers.origin && customOptions.allowOriginResponse) {
             origin = request.headers.origin;
@@ -93,9 +106,11 @@ const cors = {
     name: 'cors',
     version: '1.1.0',
     async register(server, options) {
-        setConfig(options);
-        init(server);
-        server.ext('onPreResponse', appendHeaders);
+        const customOptions = getConfig(options);
+        init(customOptions, server);
+        server.ext('onPreResponse', (request, h) => {
+            return appendHeaders(customOptions, request, h)
+        });
     },
 };
 

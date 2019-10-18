@@ -70,6 +70,7 @@ then the corresponding default value is used.
         allowMethods: "<string>",
         allowHeaders: "<string>",
         allowOriginResponse: <boolean>,
+        allowedOrigins: "<string>",
         overrideOrigin: "<string>",
         maxAge: <int>,
     }
@@ -119,6 +120,12 @@ If a request has an `origin` attached to it should your response attach it as th
 
 By default, if a request has an `origin` attached, it will be passed back as the allowed `origin` in the response and
 credentials will be allowed.
+
+##### allowedOrigins
+
+Like `allowOriginResponse`, but allows to check whether origin is in the list of allowed ones
+
+    'https://google.com, https://mail.google.com'
 
 ##### overrideOrigin
 
