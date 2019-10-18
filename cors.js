@@ -74,7 +74,7 @@ async function appendHeaders(customOptions, request, h) {
             if (customOptions.allowedOrigins.has(request.headers.origin)) {
                 origin = request.headers.origin;
             } else {
-                origin = '';
+                return h.continue;
             }
         } else if (customOptions.overrideOrigin) {
             origin = customOptions.overrideOrigin;
