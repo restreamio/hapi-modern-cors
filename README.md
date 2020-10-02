@@ -71,6 +71,7 @@ then the corresponding default value is used.
         allowHeaders: "<string>",
         allowOriginResponse: <boolean>,
         allowedOrigins: "<string>",
+        allowedOriginsFn: <function>,
         overrideOrigin: "<string>",
         maxAge: <int>,
     }
@@ -126,6 +127,13 @@ credentials will be allowed.
 Like `allowOriginResponse`, but allows to check whether origin is in the list of allowed ones
 
     'https://google.com, https://mail.google.com'
+
+##### allowedOriginsFn
+
+Specifies a predicate function, which will be called with request origin as argument. If
+function returned `true` request origin will be echoed back as allowed origin. This function
+will be executed only if none of origins specified in `allowedOrigins` matches current request
+origin.
 
 ##### overrideOrigin
 
